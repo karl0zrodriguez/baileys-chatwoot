@@ -2,6 +2,7 @@ FROM node:20-alpine
 
 # Instalar dependencias del sistema
 RUN apk add --no-cache \
+    git \
     python3 \
     make \
     g++ \
