@@ -347,11 +347,14 @@ async function connectToWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState(CONFIG.authFolder);
   
   sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: true,
-    logger: pino({ level: 'silent' }),
-    browser: ['Baileys Custom', 'Chrome', '1.0.0']
-  });
+  auth: state,
+  logger: pino({ level: 'silent' }),
+  browser: ['Baileys Custom', 'Chrome', '1.0.0'],
+  // Configuración adicional para evitar loops
+  connectTimeoutMs: 60_000,
+  defaultQueryTimeoutMs: 60_000,
+  keepAliveIntervalMs: 30_000
+});
   
   // Guardar credenciales
   sock.ev.on('creds.update', saveCreds);
@@ -366,17 +369,23 @@ async function connectToWhatsApp() {
     }
     
     if (connection === 'close') {
-      const shouldReconnect = (lastDisconnect?.error instanceof Boom) 
-        ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
-        : true;
-      
-      console.log('❌ Conexión cerrada. Reconectando:', shouldReconnect);
-      connectionStatus = 'disconnected';
-      
-      if (shouldReconnect) {
-        connectToWhatsApp();
-      }
-    } else if (connection === 'open') {
+  const shouldReconnect = (lastDisconnect?.error instanceof Boom) 
+    ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
+    : true;
+  
+  const statusCode = lastDisconnect?.error?.output?.statusCode;
+  console.log('❌ Conexión cerrada. Status:', statusCode, 'Reconectando:', shouldReconnect);
+  connectionStatus = 'disconnected';
+  
+  if (shouldReconnect) {
+    // Esperar 5 segundos antes de reconectar para evitar loops
+    console.log('⏳ Esperando 5 segundos antes de reconectar...');
+    setTimeout(() => {
+      console.log('🔄 Intentando reconectar...');
+      connectToWhatsApp();
+    }, 5000);
+  }
+} else if (connection === 'open') {
       console.log('✅ Conectado a WhatsApp!');
       connectionStatus = 'connected';
       qrCode = null;
