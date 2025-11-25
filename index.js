@@ -347,14 +347,14 @@ async function connectToWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState(CONFIG.authFolder);
   
   sock = makeWASocket({
-  auth: state,
-  logger: pino({ level: 'silent' }),
-  browser: ['Baileys Custom', 'Chrome', '1.0.0'],
-  // Configuración adicional para evitar loops
-  connectTimeoutMs: 60_000,
-  defaultQueryTimeoutMs: 60_000,
-  keepAliveIntervalMs: 30_000
-});
+    auth: state,
+    logger: pino({ level: 'silent' }),
+    browser: ['Chrome (Linux)', '', ''],  // <-- CAMBIO AQUÍ
+    connectTimeoutMs: 60_000,
+    defaultQueryTimeoutMs: 60_000,
+    keepAliveIntervalMs: 30_000,
+    markOnlineOnConnect: true
+  });
   
   // Guardar credenciales
   sock.ev.on('creds.update', saveCreds);
